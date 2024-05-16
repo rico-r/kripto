@@ -9,6 +9,7 @@ const submitEl = document.getElementById('submit');
 const fileEl = document.getElementById('file');
 const keyEl = document.getElementById('key');
 const previewEl = document.getElementById('preview');
+const previewResultEl = document.getElementById('previewResult');
 const loadingEl = document.getElementById('loading');
 const downloadBtn = document.getElementById('download');
 let url = null;
@@ -32,6 +33,11 @@ function onModeChange(e) {
             break;
     }
     downloadBtn.disabled = true;
+    if (url) {
+        URL.revokeObjectURL(url);
+        url = null;
+    }
+    previewResult();
 }
 
 function onInputKey(e) {
@@ -60,28 +66,60 @@ function previewImage() {
     downloadBtn.setAttribute('disabled', '');
 }
 
+function previewResult() {
+    if (url) {
+        previewResultEl.src = url;
+        previewResultEl.parentElement.classList.remove('d-none');
+    } else {
+        previewResultEl.removeAttribute('src');
+        previewResultEl.parentElement.classList.add('d-none');
+    }
+    downloadBtn.setAttribute('disabled', '');
+}
+
 /**
  * @param {File} file
  * @param {String} key
  */
 async function encypt(file, key) {
-    const input = new Uint8Array(await file.arrayBuffer());
-    const result = new Uint8Array(file.size);
-    for (let i = 0; i < file.size; i++) {
-        result[i] = (input[i] + key.charCodeAt(i % key.length)) % 256;
-    }
+    let result = new Uint8Array(await file.arrayBuffer());
+    result = encyptVigenere(result, key);
     return URL.createObjectURL(new Blob([result], { type: 'application/octet-stream' }));
 }
 
 /**
- * @param {File} file
+ * @param {Uint8Array} input
+ * @param {string} key
+ * @returns {Uint8Array}
  */
-async function decrypt(file, key) {
-    const input = new Uint8Array(await file.arrayBuffer());
-    const result = new Uint8Array(file.size);
-    for (let i = 0; i < file.size; i++) {
+function encyptVigenere(input, key) {
+    const result = new Uint8Array(input.byteLength);
+    for (let i = 0; i < input.byteLength; i++) {
+        result[i] = (input[i] + key.charCodeAt(i % key.length)) % 256;
+    }
+    return result;
+}
+
+/**
+ * @param {Uint8Array} input
+ * @param {string} key
+ * @returns {Uint8Array}
+ */
+function decryptVigenere(input, key) {
+    const result = new Uint8Array(input.byteLength);
+    for (let i = 0; i < input.byteLength; i++) {
         result[i] = (input[i] + 256 - key.charCodeAt(i % key.length)) % 256;
     }
+    return result;
+}
+
+/**
+ * @param {File} file
+ * @param {String} key
+ */
+async function decrypt(file, key) {
+    let result = new Uint8Array(await file.arrayBuffer());
+    result = decryptVigenere(result, key);
     return URL.createObjectURL(new Blob([result], { type: 'application/octet-stream' }));
 }
 
@@ -91,6 +129,7 @@ async function submit() {
         URL.revokeObjectURL(url);
         url = null;
     }
+    previewResult();
 
     const file = fileEl.files[0];
     const key = keyEl.value;
@@ -102,6 +141,7 @@ async function submit() {
             break;
         case MODE_DECRYPT:
             url = await decrypt(file, key);
+            previewResult();
             break;
     }
 
