@@ -78,13 +78,76 @@ function previewResult() {
 }
 
 /**
- * @param {File} file
- * @param {String} key
+ * @param {string} key
+ * @param {number} len
  */
-async function encypt(file, key) {
-    let result = new Uint8Array(await file.arrayBuffer());
-    result = encyptVigenere(result, key);
-    return URL.createObjectURL(new Blob([result], { type: 'application/octet-stream' }));
+function generateFSRMask(key, len) {
+    const result = new Uint8Array(len);
+    for (let i = 0; i < key.length; i++) {
+        result[i] = key.charCodeAt(i);
+    }
+    for (let i = key.length; i < len; i++) {
+        result[i] = result[i - 1] ^ result[i - key.length];
+    }
+    return result;
+}
+
+function generateAESKey(key) {
+    key = new TextEncoder().encode(key);
+    const result = new Array(32);
+    result.forEach((x, i, a) => a[i] = 0);
+    for (let i = 0; i < key.length; i++) {
+        result[i % 32] ^= key[i];
+    }
+    return crypto.subtle.importKey("raw", new Uint8Array(result), { name: "AES-GCM", }, true, ["encrypt", "decrypt"]);
+}
+
+function generateIV(key) {
+    key = new TextEncoder().encode(key);
+    const result = new Array(12);
+    result.forEach((x, i, a) => a[i] = 0);
+    for (let i = 0; i < key.length; i++) {
+        result[i % 12] ^= key[i];
+    }
+    return new Uint8Array(result);
+}
+
+/**
+ * @param {Uint8Array} input
+ * @param {string} key
+ * @returns {Uint8Array}
+ */
+function encyptDecryptFSR(input, key) {
+    const result = new Uint8Array(input.byteLength);
+    const mask = generateFSRMask(key, input.byteLength)
+    for (let i = 0; i < input.byteLength; i++) {
+        result[i] = input[i] ^ mask[i];
+    }
+    return result;
+}
+
+/**
+ * @param {Uint8Array} input
+ * @param {string} key
+ * @returns {Uint8Array}
+ */
+async function encyptAES(input, key) {
+    const rawKey = await generateAESKey(key);
+    const iv = generateIV(key);
+
+    return new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, rawKey, input));
+}
+
+/**
+ * @param {Uint8Array} input
+ * @param {string} key
+ * @returns {Uint8Array}
+ */
+async function decryptAES(input, key) {
+    const rawKey = await generateAESKey(key);
+    const iv = generateIV(key);
+
+    return new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, rawKey, input));
 }
 
 /**
@@ -117,9 +180,23 @@ function decryptVigenere(input, key) {
  * @param {File} file
  * @param {String} key
  */
+async function encypt(file, key) {
+    let result = new Uint8Array(await file.arrayBuffer());
+    result = encyptDecryptFSR(result, key);
+    result = await encyptAES(result, key);
+    result = encyptVigenere(result, key);
+    return URL.createObjectURL(new Blob([result], { type: 'application/octet-stream' }));
+}
+
+/**
+ * @param {File} file
+ * @param {String} key
+ */
 async function decrypt(file, key) {
     let result = new Uint8Array(await file.arrayBuffer());
     result = decryptVigenere(result, key);
+    result = await decryptAES(result, key);
+    result = encyptDecryptFSR(result, key);
     return URL.createObjectURL(new Blob([result], { type: 'application/octet-stream' }));
 }
 
@@ -140,8 +217,13 @@ async function submit() {
             url = await encypt(file, key);
             break;
         case MODE_DECRYPT:
-            url = await decrypt(file, key);
-            previewResult();
+            decrypt(file, key).then(result => {
+                url = result;
+            }).catch(() => {
+                alert('Gagal melakukan dekripsi')
+            }).finally(() => {
+                previewResult();
+            });
             break;
     }
 
@@ -166,7 +248,7 @@ document.forms[0].addEventListener('reset', () => {
 downloadBtn.addEventListener('click', () => {
     const a = document.createElement('a');
     a.href = url;
-    a.download = fileName;
+    a.download = mode == MODE_ENCRYPT ? (fileName + '.enc') : fileName.replace(/\.enc$/g, '');
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
