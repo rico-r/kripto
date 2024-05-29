@@ -10,41 +10,84 @@
     <link rel="stylesheet" href="css/main.css">
 </head>
 
-<body class="d-sm-flex">
-    <form class="rounded-3 p-3 m-1 border border-dark-subtle h-auto col-sm-6 col-lg-4 m-sm-auto">
-        <h3>KRIPTOGRAFI KELOMPOK 8</h3>
-        <hr>
-        <div class="mb-3">
-            <label for="mode">Mode:</label>
-            <select id="mode" class="form-select form-select-sm d-inline-block w-auto">
-                <option value="enkripsi">Enkripsi</option>
-                <option value="dekripsi">Dekripsi</option>
-            </select>
+<body>
+    <nav class="navbar navbar-expand-md shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold">KRIPTOGRAFI KELOMPOK 8</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
+                aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <ul class="navbar-nav ms-auto mb-2 mb-md-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-bs-toggle="modal" data-bs-target="#aboutModal">Tentang
+                            Kami</a>
+                    </li>
+            </div>
         </div>
-        <div class="mb-3">
-            File:
-            <input type="file" name="file" id="file" />
+    </nav>
+
+    <div class="m-3 mt-5">
+        <form class="rounded-3 p-3 m-1 border border-dark-subtle h-auto col-sm-6 col-lg-4 m-sm-auto">
+            <div class="mb-3">
+                <label for="mode">Mode:</label>
+                <select id="mode" class="form-select form-select-sm d-inline-block w-auto">
+                    <option value="enkripsi">Enkripsi</option>
+                    <option value="dekripsi">Dekripsi</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                File:
+                <input type="file" name="file" id="file" />
+            </div>
+            <div class="mb-3">
+                Kunci:
+                <input type="text" class="form-control" name="key" id="key" placeholder="Kunci enkripsi/dekripsi"
+                    autocomplete="off" />
+            </div>
+            <div class="mb-3">
+                <label for="preview">Preview:</label><br>
+                <img id="preview" alt="preview" />
+            </div>
+            <button class="btn btn-outline-primary rounded-pill w-100" id="submit"></button>
+            <div class="mb-3 pt-2 text-center">
+                <img id="previewResult" alt="preview" />
+            </div>
+            <div class="d-flex my-1">
+                <button class="btn btn-outline-primary rounded-pill w-25 me-1" type="reset" id="reset"
+                    title="Reset formulir">Reset</button>
+                <button class="btn btn-outline-primary rounded-pill w-75 ms-1" type="button" id="download"
+                    disabled>Unduh
+                    hasil</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="modal fade" id="aboutModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog m-auto w-75" role="document">
+            <form class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tentang Kami</h5>
+                    <button class="btn close" type="button" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h2>Kelompok 8</h2>
+                    <span>Aggota:</span>
+                    <ul>
+                        <li>Rico Ronaldo (223307081)</li>
+                        <li>Al Jihan Verina Aviolita (223307062)</li>
+                        <li>Arya Dhea Surya Bagaskara (223307081)</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" type="button" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </form>
         </div>
-        <div class="mb-3">
-            Kunci:
-            <input type="text" class="form-control" name="key" id="key" placeholder="Kunci enkripsi/dekripsi"
-                autocomplete="off" />
-        </div>
-        <div class="mb-3">
-            <label for="preview">Preview:</label><br>
-            <img id="preview" alt="preview" />
-        </div>
-        <button class="btn btn-outline-primary rounded-pill w-100" id="submit"></button>
-        <div class="mb-3 pt-2 text-center">
-            <img id="previewResult" alt="preview" />
-        </div>
-        <div class="d-flex my-1">
-            <button class="btn btn-outline-primary rounded-pill w-25 me-1" type="reset" id="reset"
-                title="Reset formulir">Reset</button>
-            <button class="btn btn-outline-primary rounded-pill w-75 ms-1" type="button" id="download" disabled>Unduh
-                hasil</button>
-        </div>
-    </form>
+    </div>
 
     <div id="loading" class="d-flex position-fixed top-0 start-0 end-0 bottom-0 bg-dark bg-opacity-75 d-none">
         <div class="m-auto text-center bg-white rounded-3 p-4">
