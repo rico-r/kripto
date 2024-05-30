@@ -48,6 +48,9 @@ function onInputKey(e) {
     }
 }
 
+/**
+ * Tampilkan preview dari input
+ */
 function previewImage() {
     if (fileEl.files &&
         fileEl.files[0] &&
@@ -66,6 +69,9 @@ function previewImage() {
     downloadBtn.setAttribute('disabled', '');
 }
 
+/**
+ * Tampilkan preview dari hasil
+ */
 function previewResult() {
     if (url) {
         previewResultEl.src = url;
@@ -92,24 +98,10 @@ function generateFSRMask(key, len) {
     return result;
 }
 
-function generateAESKey(key) {
+async function generateAESKey(key) {
     key = new TextEncoder().encode(key);
-    const result = new Array(32);
-    result.forEach((x, i, a) => a[i] = 0);
-    for (let i = 0; i < key.length; i++) {
-        result[i % 32] ^= key[i];
-    }
-    return crypto.subtle.importKey("raw", new Uint8Array(result), { name: "AES-GCM", }, true, ["encrypt", "decrypt"]);
-}
-
-function generateIV(key) {
-    key = new TextEncoder().encode(key);
-    const result = new Array(12);
-    result.forEach((x, i, a) => a[i] = 0);
-    for (let i = 0; i < key.length; i++) {
-        result[i % 12] ^= key[i];
-    }
-    return new Uint8Array(result);
+    key = await crypto.subtle.digest('SHA-256', key);
+    return crypto.subtle.importKey("raw", key, { name: "AES-GCM", }, true, ["encrypt", "decrypt"]);
 }
 
 /**
@@ -133,9 +125,16 @@ function encyptDecryptFSR(input, key) {
  */
 async function encyptAES(input, key) {
     const rawKey = await generateAESKey(key);
-    const iv = generateIV(key);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
 
-    return new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, rawKey, input));
+    const enc = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, rawKey, input));
+
+    // Gabung iv dan hasil enkripsi
+    const result = new Uint8Array(iv.length + enc.length);
+    result.set(iv);
+    result.set(enc, iv.length);
+
+    return result;
 }
 
 /**
@@ -145,7 +144,12 @@ async function encyptAES(input, key) {
  */
 async function decryptAES(input, key) {
     const rawKey = await generateAESKey(key);
-    const iv = generateIV(key);
+
+    // Ambil iv dari input
+    const iv = input.slice(0, 12);
+
+    // Buang iv dari input
+    input = input.slice(12, input.length);
 
     return new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, rawKey, input));
 }
