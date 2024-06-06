@@ -218,7 +218,12 @@ async function submit() {
 
     switch (mode) {
         case MODE_ENCRYPT:
-            url = await encypt(file, key);
+            encypt(file, key).then(result => {
+                url = result;
+            }).finally(() => {
+                loadingEl.classList.add('d-none');
+                downloadBtn.removeAttribute('disabled');
+            });
             break;
         case MODE_DECRYPT:
             decrypt(file, key).then(result => {
@@ -227,12 +232,11 @@ async function submit() {
                 alert('Gagal melakukan dekripsi')
             }).finally(() => {
                 previewResult();
+                loadingEl.classList.add('d-none');
+                downloadBtn.removeAttribute('disabled');
             });
             break;
     }
-
-    loadingEl.classList.add('d-none');
-    downloadBtn.removeAttribute('disabled');
 }
 
 document.querySelector('form').addEventListener('submit', (e) => {
